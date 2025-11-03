@@ -1,24 +1,54 @@
+#include <bitset>
+#include <cstdint>
 #include <iostream>
 #include <vector>
 
-using std::vector;
-using std::pair;
+#define MAX_VERTICES 1000
 
-int number_of_components(vector<vector<int> > &adj) {
-  int res = 0;
-  //write your code here
-  return res;
-}
+using namespace std;
 
 int main() {
-  size_t n, m;
-  std::cin >> n >> m;
-  vector<vector<int> > adj(n, vector<int>());
-  for (size_t i = 0; i < m; i++) {
-    int x, y;
-    std::cin >> x >> y;
-    adj[x - 1].push_back(y - 1);
-    adj[y - 1].push_back(x - 1);
-  }
-  std::cout << number_of_components(adj);
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    uint16_t n, m;
+    cin >> n >> m;
+
+    vector<vector<uint16_t>> adj(n + 1);
+    for (uint16_t i = 0; i < m; i++) {
+        uint16_t a, b;
+        cin >> a >> b;
+        adj[a].push_back(b);
+        adj[b].push_back(a);
+    }
+
+    bitset<MAX_VERTICES + 1> visited;
+    uint16_t components = 0;
+    vector<uint16_t> stack;
+
+    for (uint16_t i = 1; i <= n; i++) {
+        if (visited[i]) continue;
+
+        // New component found
+        components++;
+        stack.clear();
+        stack.push_back(i);
+        visited[i] = true;
+
+        // Iterative DFS
+        while (!stack.empty()) {
+            uint16_t u = stack.back();
+            stack.pop_back();
+
+            for (uint16_t v : adj[u]) {
+                if (!visited[v]) {
+                    visited[v] = true;
+                    stack.push_back(v);
+                }
+            }
+        }
+    }
+
+    cout << components;
+    return 0;
 }
