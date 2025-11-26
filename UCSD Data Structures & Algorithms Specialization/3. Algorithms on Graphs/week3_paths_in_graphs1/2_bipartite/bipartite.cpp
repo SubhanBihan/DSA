@@ -1,49 +1,53 @@
-#include <limits>
 #include <iostream>
 #include <vector>
-#include <queue>
 
 using std::vector;
-using std::queue;
+
+typedef enum {RED = -1, GRAY, BLUE} side_t;
 
 template <typename T>
-bool is_bipartite(vector<vector<T>> &adj) {
-  T v = ;
-  queue<T> v_queue;
-  vector<T> v_dist(adj.size(), std::numeric_limits<T>::max());
+void dfs(vector<vector<T>>& adj, vector<side_t>& v_sides, T u, bool& is_bipartite) {
+  // v_sides[u] = RED;
 
-  v_queue.push(s);
-  v_dist[s] = 0;
+  for (auto nxt : adj[u]) {
+    if (!is_bipartite) return; 
 
-  while (!v_queue.empty()) {
-    v = v_queue.front();
-    v_queue.pop();
-
-    for (auto w : adj[v]) {
-      if (w == t) return v_dist[v] + 1;
-
-      if (v_dist[w] == std::numeric_limits<T>::max()) {
-        v_queue.push(w);
-        v_dist[w] = v_dist[v] + 1;
-      }
+    if (v_sides[nxt] == GRAY) {
+      v_sides[nxt] = static_cast<side_t>(-v_sides[u]);
+      dfs(adj, v_sides, nxt, is_bipartite);
+    }
+    else if (v_sides[nxt] == v_sides[u]) {
+      is_bipartite = false;
+      return;
     }
   }
-
-  return true;
 }
 
 int main() {
   int n, m;
   std::cin >> n >> m;
+
   vector<vector<int>> adj(n, vector<int>());
+  vector<side_t> v_sides(n, GRAY);
+  bool is_bipartite = true;
+
   for (int i = 0; i < m; i++) {
     int x, y;
     std::cin >> x >> y;
     adj[x - 1].push_back(y - 1);
     adj[y - 1].push_back(x - 1);
   }
-  int s, t;
-  std::cin >> s >> t;
-  s--, t--;
-  std::cout << is_bipartite(adj);
+
+  for (int u = 0; u < n; u++) {
+    if (v_sides[u] == GRAY) {
+      v_sides[u] = RED;
+      dfs(adj, v_sides, u, is_bipartite);
+    }
+
+    if (!is_bipartite) break;
+  }
+
+  std::cout << is_bipartite;
+
+  return 0;
 }
