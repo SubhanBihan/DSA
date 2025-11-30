@@ -34,13 +34,13 @@ void bellford(int src, vector<vector<pair<int, ll>>>& adj, vector<ll>& dist) {
   }
 
   // BFS/DFS propagation from negative-cycle nodes
-  std::vector<bool> visited(n, false);
+  // std::vector<bool> visited(n, false);
   std::queue<int> q;
 
   for (int v = 0; v < n; v++) {
       if (in_negcyc[v]) {
           q.push(v);
-          visited[v] = true;
+          // visited[v] = true;
       }
   }
 
@@ -48,8 +48,8 @@ void bellford(int src, vector<vector<pair<int, ll>>>& adj, vector<ll>& dist) {
       int u = q.front();  
       q.pop();
       for (auto [v, w] : adj[u]) {
-          if (!visited[v]) {
-              visited[v] = true;
+          if (!in_negcyc[v]) {
+              in_negcyc[v] = true;
               q.push(v);
           }
       }
@@ -57,7 +57,7 @@ void bellford(int src, vector<vector<pair<int, ll>>>& adj, vector<ll>& dist) {
 
   // Mark all reachable nodes as -∞
   for (int v = 0; v < n; v++) {
-      if (visited[v]) dist[v] = MINUS_INF;
+      if (in_negcyc[v]) dist[v] = MINUS_INF;
   }
 }
 
