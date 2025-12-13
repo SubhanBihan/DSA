@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cstdint>
+#include <cstdio>
 #include <iostream>
 #include <iomanip>
 #include <vector>
@@ -83,7 +84,8 @@ int main() {
   for (const auto &e : E) {
     if (dsu.unite(e.a, e.b)) {
       if (dsu.trees + 1 == k) {
-        cout << fixed << setprecision(10) << e.w;
+        // cout << fixed << setprecision(10) << e.w;
+        printf("%.010f", e.w);
         break;
       }
     }
