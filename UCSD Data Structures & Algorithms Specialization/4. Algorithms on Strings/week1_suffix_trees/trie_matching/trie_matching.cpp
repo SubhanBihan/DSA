@@ -19,6 +19,7 @@ using std::views::iota;
 
 using Node = uint32_t;
 using Key = pair<Node, char>;
+using Value = pair<Node, bool>;
 
 struct KeyHash {
     std::size_t operator()(const Key& k) const noexcept {
@@ -28,22 +29,23 @@ struct KeyHash {
 };
 
 auto TrieConstruct(const vector<string>& patterns) {
-  unordered_map<Key, Node, KeyHash> trie;
+  unordered_map<Key, Value, KeyHash> trie;
   Node new_node = 1;
   Key key;
 
   for (const auto& pattern: patterns) {
     key.first = 0;
 
-    for (const auto c: pattern) {
-      key.second = c;
+    for (auto it = pattern.begin(); it != pattern.end(); ++it) {
+      key.second = *it;
+      bool is_last = (std::next(it) == pattern.end());
 
-      auto [it, inserted] = trie.try_emplace(key, new_node);
+      auto [entry, inserted] = trie.try_emplace(key, std::make_pair(new_node, is_last));
 
       if (inserted) {
           key.first = new_node++;
       } else {
-          key.first = it->second;
+          key.first = entry->second.first;
       }
     }
   }
@@ -54,11 +56,11 @@ auto TrieConstruct(const vector<string>& patterns) {
 auto TrieMatch(const string& Text, const vector<string>& patterns) {
   vector<Node> matches;   matches.reserve(Text.size());
 
-  auto trie = TrieConstruct(patterns);
+  const auto trie = TrieConstruct(patterns);
 
   for (Node start = 0; start < Text.size(); start++) {
     for (Node end = 0; end < Text.size(); end++) {
-      
+
     }
   }
 
