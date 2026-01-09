@@ -1,80 +1,86 @@
-#include <algorithm>
-#include <cassert>
+#include <cstdint>
 #include <cstdio>
-#include <iostream>
+#include <cstdlib>
 #include <string>
+#include <iostream>
+#include <unordered_map>
+#include <utility>
 #include <vector>
+#include <ranges>
+#include <cstddef>
+// #include <chrono>
 
-using namespace std;
+using std::unordered_map;
+using std::vector;
+using std::string;
+using std::pair;
+using std::cin;
+using std::views::iota;
 
-int const Letters =    4;
-int const NA      =   -1;
+using Node = uint32_t;
+using Key = pair<Node, char>;
 
-struct Node
-{
-	int next [Letters];
-
-	Node ()
-	{
-		fill (next, next + Letters, NA);
-	}
-
-	bool isLeaf () const
-	{
-	    return (next[0] == NA && next[1] == NA && next[2] == NA && next[3] == NA);
-	}
+struct KeyHash {
+    std::size_t operator()(const Key& k) const noexcept {
+        return (static_cast<std::size_t>(k.first) << 8)
+             ^ static_cast<unsigned char>(k.second);
+    }
 };
 
-int letterToIndex (char letter)
-{
-	switch (letter)
-	{
-		case 'A': return 0; break;
-		case 'C': return 1; break;
-		case 'G': return 2; break;
-		case 'T': return 3; break;
-		default: assert (false); return -1;
-	}
+auto TrieConstruct(const vector<string>& patterns) {
+  unordered_map<Key, Node, KeyHash> trie;
+  Node new_node = 1;
+  Key key;
+
+  for (const auto& pattern: patterns) {
+    key.first = 0;
+
+    for (const auto c: pattern) {
+      key.second = c;
+
+      auto [it, inserted] = trie.try_emplace(key, new_node);
+
+      if (inserted) {
+          key.first = new_node++;
+      } else {
+          key.first = it->second;
+      }
+    }
+  }
+
+  return trie;
 }
 
-vector <int> solve (const string& text, int n, const vector <string>& patterns)
-{
-	vector <int> result;
+auto TrieMatch(const string& Text, const vector<string>& patterns) {
+  vector<Node> matches;   matches.reserve(Text.size());
 
-	// write your code here
+  auto trie = TrieConstruct(patterns);
 
-	return result;
+  for (Node start = 0; start < Text.size(); start++) {
+    for (Node end = 0; end < Text.size(); end++) {
+      
+    }
+  }
+
+  return matches;
 }
 
-int main (void)
-{
-	string t;
-	cin >> t;
+int main() {
+  int n;
+  cin >> n;
+  cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
-	int n;
-	cin >> n;
+  vector<string> patterns;  patterns.reserve(n);
+  for (auto _ : iota(0, n)) {
+    string s;
+    getline(cin, s);
+    patterns.push_back(std::move(s));
+  }
 
-	vector <string> patterns (n);
-	for (int i = 0; i < n; i++)
-	{
-		cin >> patterns[i];
-	}
+  auto trie = TrieConstruct(patterns);
+  for (const auto& [key, value]: trie) {
+    printf("%d->%d:%c\n", key.first, value, key.second);
+  }
 
-	vector <int> ans;
-	ans = solve (t, n, patterns);
-
-	for (int i = 0; i < (int) ans.size (); i++)
-	{
-		cout << ans[i];
-		if (i + 1 < (int) ans.size ())
-		{
-			cout << " ";
-		}
-		else
-		{
-			cout << endl;
-		}
-	}
-
-	return 0;
+  return EXIT_SUCCESS;
 }
