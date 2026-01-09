@@ -1,10 +1,14 @@
-#[allow(dead_code)]
-const MAX_PATTERNS: usize = 100;
-#[allow(dead_code)]
-const MAX_LENGTH: usize = 100;
+// #[allow(dead_code)]
+// const MAX_PATTERNS: usize = 100;
+// #[allow(dead_code)]
+// const MAX_LENGTH: usize = 100;
 
 use std::io::{self, BufRead};
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
+
+type TrieType = HashMap<(u16, u8), u16>;                    // Map of (node, char) -> next node
+// use std::time::Instant;
 
 fn main() {
     let mut it = io::stdin().lock().lines();
@@ -15,41 +19,46 @@ fn main() {
         patterns.push(it.next().unwrap().unwrap());
     }
 
-    let edges = Trie(&patterns);
-    for e in &edges {
-        println!("{e}");
+    // const ITER: usize = 1000000;
+    // let start = Instant::now();
+
+    // for _ in 0..ITER {
+    let trie = TrieConstruct(&patterns);
+    for (key, value) in trie {
+        println!("{}->{}:{}", key.0, value, key.1 as char);
     }
+    // }
+
+    // let total = start.elapsed();
+
+    // println!(
+    //     "Average time: {:.10} seconds",
+    //     total.as_secs_f64() / ITER as f64
+    // );
 }
 
-fn Trie(patterns: &Vec<String>) -> Vec<String> {
-    let mut trie: Vec<HashMap<u8, u16>> = Vec::with_capacity(MAX_LENGTH);
-    let mut edges: Vec<String> = Vec::with_capacity(patterns[0].len());
-
-    let mut node: u16 = 1;
-    let mut in_trie: bool;
+#[allow(non_snake_case)]
+fn TrieConstruct(patterns: &Vec<String>) -> TrieType {
+    let mut trie: TrieType = HashMap::with_capacity(patterns[0].len());
+    let mut new_node: u16 = 1;
+    let mut key: (u16, u8) = (0, 0);
 
     for pattern in patterns {
-        in_trie = true;
+        key.0 = 0;
 
-        for i in 0..pattern.len() {
-            if i >= trie.len() {
-                trie.push(HashMap::new());
+        for c in pattern.as_bytes() {
+            key.1 = *c;
+            
+            if let Entry::Vacant(e) = trie.entry(key) {
+                e.insert(new_node);
+                key.0 = new_node;
+                new_node += 1;
             }
-
-            if !in_trie || !trie[i].contains_key(&pattern.as_bytes()[i]) {
-                trie[i].insert(pattern.as_bytes()[i], node);
-                
-                let prev_node = if i == 0 {0} else {trie[i - 1][&pattern.as_bytes()[i - 1]]};
-
-                edges.push(format!(
-                    "{prev_node}->{node}:{}", pattern.as_bytes()[i] as char
-                ));
-
-                node += 1;
-                in_trie = false;
+            else {
+                key.0 = trie[&key];
             }
         }
     }
 
-    edges
+    trie
 }
