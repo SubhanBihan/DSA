@@ -6,7 +6,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <ranges>
 #include <cstddef>
 // #include <chrono>
 
@@ -15,16 +14,15 @@ using std::vector;
 using std::string;
 using std::pair;
 using std::cin;
-using std::views::iota;
 
 using Node = uint32_t;
-using Key = pair<Node, char>;
-using Value = pair<Node, bool>;
+using Key = pair<Node, char>;		// (current_node, symbol)
+using Value = pair<Node, bool>;		// (next_node, is_endnode)
 
 struct KeyHash {
     std::size_t operator()(const Key& k) const noexcept {
         return (static_cast<std::size_t>(k.first) << 8)
-             ^ static_cast<unsigned char>(k.second);
+             | static_cast<unsigned char>(k.second);
     }
 };
 
@@ -57,10 +55,27 @@ auto TrieMatch(const string& Text, const vector<string>& patterns) {
   vector<Node> matches;   matches.reserve(Text.size());
 
   const auto trie = TrieConstruct(patterns);
+//   bool is_endnode = false;
+  Key key;
 
   for (Node start = 0; start < Text.size(); start++) {
-    for (Node end = 0; end < Text.size(); end++) {
+	key.first = 0;
+    for (Node end = start; end < Text.size(); end++) {
+		key.second = Text[end];
 
+		auto it= trie.find(key);
+
+		if (it != trie.end()) {				// Matching next node found 	-> move to it
+			if (it->second.second) {		// Next node is a trie end-node -> match found, move to next Text suffix (condition: p_i not a prefix of p_j)
+				matches.push_back(start);
+				break;
+			}
+
+			key.first = it->second.first;
+		}
+		else {								// Next nodes do not match 		-> move to next Text suffix
+			break;
+		}
     }
   }
 
@@ -68,20 +83,26 @@ auto TrieMatch(const string& Text, const vector<string>& patterns) {
 }
 
 int main() {
+  string Text;
+  getline(cin, Text);
+
   int n;
   cin >> n;
   cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
   vector<string> patterns;  patterns.reserve(n);
-  for (auto _ : iota(0, n)) {
+  for (auto i = 0; i < n; i++) {
     string s;
     getline(cin, s);
     patterns.push_back(std::move(s));
   }
 
-  auto trie = TrieConstruct(patterns);
-  for (const auto& [key, value]: trie) {
-    printf("%d->%d:%c\n", key.first, value, key.second);
+  auto matches = TrieMatch(Text, patterns);
+
+  if (!matches.empty()) {
+	for (auto i = 0; i < matches.size() - 1; i++) printf("%d ", matches[i]);
+
+	printf("%d", matches.back());
   }
 
   return EXIT_SUCCESS;

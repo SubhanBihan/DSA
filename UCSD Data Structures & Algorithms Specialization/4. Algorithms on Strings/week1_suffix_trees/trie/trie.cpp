@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <ranges>
+// #include <ranges>
 #include <cstddef>
 // #include <chrono>
 
@@ -15,7 +15,7 @@ using std::vector;
 using std::string;
 using std::pair;
 using std::cin;
-using std::views::iota;
+// using std::views::iota;
 
 using Node = uint16_t;
 using Key = pair<Node, char>;
@@ -57,7 +57,8 @@ int main() {
   cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
   vector<string> patterns;  patterns.reserve(n);
-  for (auto _ : iota(0, n)) {
+  // for (auto _ : iota(0, n)) {
+  for (auto i = 0; i < n; i++) {
     string s;
     getline(cin, s);
     patterns.push_back(std::move(s));

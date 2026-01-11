@@ -49,13 +49,15 @@ fn TrieConstruct(patterns: &Vec<String>) -> TrieType {
         for c in pattern.as_bytes() {
             key.1 = *c;
             
-            if let Entry::Vacant(e) = trie.entry(key) {
-                e.insert(new_node);
-                key.0 = new_node;
-                new_node += 1;
-            }
-            else {
-                key.0 = trie[&key];
+            match trie.entry(key) {         // Single lookup - very efficient
+                Entry::Vacant(e) => {
+                    e.insert(new_node);
+                    key.0 = new_node;
+                    new_node += 1;
+                }
+                Entry::Occupied(e) => {
+                    key.0 = *e.get();
+                }
             }
         }
     }

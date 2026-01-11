@@ -1,30 +1,83 @@
-#include <iostream>
-#include <map>
+#include <cstdint>
+// #include <cstdio>
+#include <cstdlib>
 #include <string>
+#include <iostream>
+#include <unordered_map>
+#include <utility>
 #include <vector>
+#include <ranges>
+// #include <cstddef>
+// #include <chrono>
 
+using std::unordered_map;
+using std::vector;
+using std::string;
+using std::pair;
 using std::cin;
 using std::cout;
-using std::endl;
-using std::map;
-using std::string;
-using std::vector;
+// using std::views::iota;
 
-// Build a suffix tree of the string text and return a vector
-// with all of the labels of its edges (the corresponding 
-// substrings of the text) in any order.
-vector<string> ComputeSuffixTreeEdges(const string& text) {
-  vector<string> result;
-  // Implement this function yourself
-  return result;
+using Node = int16_t;
+using Value = pair<Node, string>;
+using Map = unordered_map<char, Value>;
+
+auto SuffixTree(const string& Text) {
+  vector<Map> sfxtree(Text.size());
+  Node new_node = 1;
+
+  for (Node i = 0; i < Text.size(); i++) {
+    auto suffix = Text.substr(i);
+
+    Node current_node = 0;
+    bool inserted = false;
+
+    do {
+      auto [it, ins] = sfxtree[current_node].try_emplace(suffix.front(), std::make_pair(-1, suffix));
+      inserted = ins;
+
+      if (!inserted) {    // First letter match found -> new node will be added somewhere down the line
+        auto value = &it->second;
+        auto node_text = &it->second.second;
+        auto [it1, it2] = std::ranges::mismatch(*node_text, suffix);
+
+        // auto i = it1 - node_text->begin();
+        auto j = it2 - suffix.begin();
+        auto nt_tail = node_text->substr(j);
+        suffix = suffix.substr(j);
+        
+        if (j < node_text->size()) {                         // Break current edge and insert new node
+          *node_text = node_text->substr(0, j);   // Truncating string of current node
+
+          sfxtree[new_node].insert({nt_tail.front(), std::make_pair(value->first, nt_tail)});   // NOTE: Preserve the tail branches
+          sfxtree[new_node].insert({suffix.front(), std::make_pair(-1, suffix)});
+          value->first = new_node++;                         // Setting next-node value of current node
+
+          inserted = true;
+        }
+        else {
+          current_node = value->first;
+        }
+      }
+    } while (!inserted);
+  }
+
+  return sfxtree;
 }
 
 int main() {
-  string text;
-  cin >> text;
-  vector<string> edges = ComputeSuffixTreeEdges(text);
-  for (int i = 0; i < edges.size(); ++i) {
-    cout << edges[i] << endl;
+  string Text;
+  getline(cin, Text);
+
+  auto sfxtree = SuffixTree(Text);
+
+  for (auto& nodes: sfxtree) {
+    if (!nodes.empty())
+      for (auto& [_, value]: nodes) {
+        // printf("%s", value.second.c_str());
+        cout << value.second << "\n";
+      }
   }
-  return 0;
+
+  return EXIT_SUCCESS;
 }
