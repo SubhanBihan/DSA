@@ -7,18 +7,20 @@
 
 using namespace std;
 
+using Node = uint16_t;
+using AdjList = vector<vector<uint16_t>>;
 
-bool reachable(const vector<vector<uint16_t>> &adj, uint16_t x, uint16_t y) {
+bool reachable(const AdjList& adj, Node x, Node y) {
     bitset<MAX_VERTICES + 1> visited;
-    vector<uint16_t> stack;
+    vector<Node> stack;
     stack.push_back(x);
     visited[x] = true;
 
     while (!stack.empty()) {
-        uint16_t u = stack.back();
+        auto u = stack.back();
         stack.pop_back();
 
-        for (uint16_t v : adj[u]) {
+        for (auto v : adj[u]) {
             if (!visited[v]) {
                 if (v == y) return true;
                 visited[v] = true;
@@ -33,17 +35,17 @@ int main() {
     ios::sync_with_stdio(false);
     cin.tie(nullptr);
 
-    uint16_t n, m;
+    Node n, m;
     cin >> n >> m;
-    vector<vector<uint16_t>> adj(n + 1);
-    for (uint16_t i = 0; i < m; i++) {
-        uint16_t a, b;
+    AdjList adj(n + 1);
+    for (Node i = 0; i < m; i++) {
+        Node a, b;
         cin >> a >> b;
         adj[a].push_back(b);
         adj[b].push_back(a);
     }
 
-    uint16_t x, y;
+    Node x, y;
     cin >> x >> y;
 
     cout << reachable(adj, x, y);

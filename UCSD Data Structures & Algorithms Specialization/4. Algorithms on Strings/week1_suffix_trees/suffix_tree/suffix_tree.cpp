@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstdint>
 // #include <cstdio>
 #include <cstdlib>
@@ -6,7 +7,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <ranges>
+// #include <ranges>
 // #include <cstddef>
 // #include <chrono>
 
@@ -33,13 +34,20 @@ auto SuffixTree(const string& Text) {
     bool inserted = false;
 
     do {
-      auto [it, ins] = sfxtree[current_node].try_emplace(suffix.front(), std::make_pair(-1, suffix));
-      inserted = ins;
+      // auto [it, ins] = sfxtree[current_node].try_emplace(suffix.front(), std::make_pair(-1, suffix));
+      // inserted = ins;
+
+      auto result = sfxtree[current_node].emplace(suffix.front(), std::make_pair(-1, suffix));
+      auto it = result.first;
+      inserted = result.second;
+
 
       if (!inserted) {    // First letter match found -> new node will be added somewhere down the line
         auto value = &it->second;
         auto node_text = &it->second.second;
-        auto [it1, it2] = std::ranges::mismatch(*node_text, suffix);
+        // auto [it1, it2] = std::mismatch(*node_text, suffix);
+        auto mm = std::mismatch(node_text->begin(), node_text->end(), suffix.begin(), suffix.end());
+        auto it2 = mm.second;
 
         // auto i = it1 - node_text->begin();
         auto j = it2 - suffix.begin();
@@ -73,9 +81,9 @@ int main() {
 
   for (auto& nodes: sfxtree) {
     if (!nodes.empty())
-      for (auto& [_, value]: nodes) {
+      for (auto& el: nodes) {
         // printf("%s", value.second.c_str());
-        cout << value.second << "\n";
+        cout << el.second.second << "\n";
       }
   }
 

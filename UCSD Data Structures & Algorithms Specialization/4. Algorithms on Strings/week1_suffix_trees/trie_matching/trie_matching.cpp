@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 #include <cstddef>
+#include <limits>
 // #include <chrono>
 
 using std::unordered_map;
@@ -38,9 +39,9 @@ auto TrieConstruct(const vector<string>& patterns) {
       key.second = *it;
       bool is_last = (std::next(it) == pattern.end());
 
-      auto [entry, inserted] = trie.try_emplace(key, std::make_pair(new_node, is_last));
-
-      if (inserted) {
+      auto entry = trie.find(key);
+      if (entry == trie.end()) {
+          trie[key] = std::make_pair(new_node, is_last);
           key.first = new_node++;
       } else {
           key.first = entry->second.first;

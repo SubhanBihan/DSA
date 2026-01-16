@@ -8,6 +8,7 @@
 #include <vector>
 // #include <ranges>
 #include <cstddef>
+#include <limits>
 // #include <chrono>
 
 using std::unordered_map;
@@ -38,9 +39,9 @@ auto TrieConstruct(const vector<string>& patterns) {
     for (const auto c: pattern) {
       key.second = c;
 
-      auto [it, inserted] = trie.try_emplace(key, new_node);
-
-      if (inserted) {
+      auto it = trie.find(key);
+      if (it == trie.end()) {
+          trie[key] = new_node;
           key.first = new_node++;
       } else {
           key.first = it->second;
@@ -69,8 +70,8 @@ int main() {
   // auto start = std::chrono::high_resolution_clock::now();
   // for (int i = 0; i < ITER; ++i) {
   auto trie = TrieConstruct(patterns);
-  for (const auto& [key, value]: trie) {
-    printf("%d->%d:%c\n", key.first, value, key.second);
+  for (const auto& el: trie) {
+    printf("%d->%d:%c\n", el.first.first, el.second, el.first.second);
   }
   // }
 
