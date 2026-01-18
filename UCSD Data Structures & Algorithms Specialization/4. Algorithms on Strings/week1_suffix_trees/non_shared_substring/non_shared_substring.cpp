@@ -1,154 +1,156 @@
 #include <algorithm>
-#include <climits>
+#include <cstdint>
+// #include <cstdio>
+#include <cstdlib>
+// #include <numeric>
 #include <string>
 #include <iostream>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <functional>
+#include <tuple>
+// #include <cstddef>
 
 using std::unordered_map;
 using std::vector;
 using std::string;
-using std::pair;
+// using std::pair;
+using std::tuple;
+using std::get;
 using std::cin;
 using std::cout;
 
-using Node = int;
-using Value = pair<Node, string>;
+using Node = int16_t;
+using Label = uint8_t;
+using Value = tuple<Node, string, Label>;
 using Map = unordered_map<char, Value>;
 
-struct STree {
-    vector<Map> edges;
-    int root = 0;
-    int node_count;
+struct Frame {
+  Node node;
+  Map::iterator it;
 };
 
-STree SuffixTree(const string& Text) {
-    int n = Text.size();
-    vector<Map> sfxtree(2*n + 5);   // enough for all internal nodes
+auto ShortestNonSharedSubstring(const string& A, const string& B) {
+  /// Constructing the suffix tree
+  const string Text = A + '#' + B + '$';
+  vector<Map> sfxtree(Text.size() + 1);     // Last node here will represent leaf node
 
-    int new_node = 1;
+  Node new_node = 1;
 
-    for (int i = 0; i < n; i++) {
-        string suffix = Text.substr(i);
+  for (Node i = 0; i < Text.size(); i++) {
+    auto suffix = Text.substr(i);
 
-        int current = 0;
-        bool inserted = false;
+    Node current_node = 0;
+    bool inserted = false;
+    Label current_label = (i >= A.size()) + 1;
+    
+    do {
+      auto result = sfxtree[current_node].emplace(suffix.front(), std::make_tuple(Text.size(), suffix, current_label));
+      auto it = result.first;
+      inserted = result.second;
 
-        do {
-            auto it = sfxtree[current].find(suffix.front());
-            if (it == sfxtree[current].end()) {
-                auto res = sfxtree[current].emplace(suffix.front(), make_pair(-1, suffix));
-                it = res.first;
-                inserted = true;
-            } else {
-                inserted = false;
-            }
+      if (!inserted) {    // First letter match found -> new node will be added somewhere down the line
+        auto value = &it->second;
+        auto& node_text = get<1>(*value);
+        // auto [it1, it2] = std::mismatch(*node_text, suffix);
+        auto mm = std::mismatch(node_text.begin(), node_text.end(), suffix.begin(), suffix.end());
+        auto it2 = mm.second;
 
-            if (!inserted) {
-                // auto& [child, label] = it->second;
-                auto& value = it->second;
-				auto child = value.first;
-				auto label = value.second;
+        // auto i = it1 - node_text.begin();
+        auto j = it2 - suffix.begin();
+        auto nt_tail = node_text.substr(j);
+        suffix = suffix.substr(j);
+        
+        if (j < node_text.size()) {                              // Break current edge and insert new node
+          node_text = node_text.substr(0, j);         // Truncating string of current node
 
-                auto p = std::mismatch(label.begin(), label.end(), suffix.begin(), suffix.end());
-				auto p2 = p.second;
-                int j = p2 - suffix.begin();
+          sfxtree[new_node].insert({nt_tail.front(), std::make_tuple(get<0>(*value), nt_tail, get<2>(*value))});   // NOTE: Preserve the tail branches
+          sfxtree[new_node].insert({suffix.front(), std::make_tuple(Text.size(), suffix, current_label)});
 
-                string old_tail = label.substr(j);
-                string new_tail = suffix.substr(j);
+          get<0>(*value) = new_node++;                         // Setting next-node value of current node
+          
+          inserted = true;
+        }
+        else {
+          current_node = get<0>(*value);
+        }
 
-                if (j < (int)label.size()) {     // split
-                    label = label.substr(0, j);
+        get<2>(*value) |= current_label;                     // Setting label value of current node
+      }
+    } while (!inserted);
+  }
 
-                    int split = new_node++;
 
-                    sfxtree[split][old_tail.front()] = { child, old_tail };
-                    sfxtree[split][new_tail.front()] = { -1, new_tail };
+  /// Finding the shortest non-shared substring
+  string answer;
+  answer.reserve(A.size());
+  answer = "";
 
-                    child = split;
-                    inserted = true;
-                }
-                else {
-                    if (child == -1) {
-                        child = new_node++;
-                        sfxtree[child][new_tail.front()] = { -1, new_tail };
-                        inserted = true;
-                    }
-                    else {
-                        current = child;
-                        suffix = new_tail;
-                    }
-                }
-            }
-        } while (!inserted);
+  Node ans_len = A.size() + 1;
+  Node current_len = 0;
+
+  vector<Frame> stack;
+  vector<const string*> segments;
+
+  Node root = 0;
+  stack.push_back({root, sfxtree[root].begin()});
+
+  while (!stack.empty()) {
+    auto& top = stack.back();
+    Node u = top.node;
+
+    if (top.it != sfxtree[u].end()) {
+      // Take next edge
+      auto first_char = top.it->first;
+      auto& edge = top.it->second;
+      auto label = get<2>(edge);
+
+      top.it++;
+
+      // Go down
+      if (label != 2 && first_char != '#') {
+        auto& str = get<1>(edge);
+
+        if (label == 3 && current_len + str.size() + 1 < ans_len) {
+          Node v = get<0>(edge);
+
+          stack.push_back({v, sfxtree[v].begin()});
+          segments.push_back(&get<1>(edge));
+          current_len += str.size();
+        }
+        else if (label == 1) {    // Found an answer
+          answer = "";
+          for (const auto* s: segments) {
+            answer += *s;
+          }
+          answer += first_char;
+
+          ans_len = answer.size();
+        }
+      }
     }
+    else {      // All children done -> backtrack
+      stack.pop_back();
 
-    return {sfxtree, 0, new_node };
-}
+      if (!segments.empty()) {
+        current_len -= segments.back()->size();
+        segments.pop_back();
+      }
+    }
+  }
 
-string shortestNonShared(const string& A, const string& B)
-{
-    string S = A + "#" + B + "$";
-    int split = A.size();
-    
-    STree T = SuffixTree(S);
-    
-    vector<unsigned char> color(T.node_count, 0);
-    
-    int best = INT_MAX;
-    string answer;
-    
-    std::function<void(int)> dfs = [&](int u) {
-        for (auto it = T.edges[u].begin(); it != T.edges[u].end(); ++it) {
-            int v = it->second.first;
-            
-            if (v != -1) {
-                dfs(v);
-                color[u] |= color[v];
-            }
-        }
-        
-        for (auto it = T.edges[u].begin(); it != T.edges[u].end(); ++it) {
-            int v = it->second.first;
-            const string& lab = it->second.second;
-            
-            if (v == -1) {
-                int start = (int)S.size() - (int)lab.size();
-                if (start < split) color[u] |= 1;
-                else if (start > split) color[u] |= 2;
-            }
-        }
-        
-        if (color[u] == 1) {
-            for (auto it = T.edges[u].begin(); it != T.edges[u].end(); ++it) {
-                int v = it->second.first;
-                const string& lab = it->second.second;
-                
-                if (lab.empty() || lab[0] == '#' || lab[0] == '$') continue;
-                
-                for (size_t k = 1; k <= lab.size() && (int)k < best; ++k) {
-                    string candidate = lab.substr(0, k);
-                    if (B.find(candidate) == string::npos) {
-                        best = k;
-                        answer = candidate;
-                        break;
-                    }
-                }
-            }
-        }
-    };
-    
-    dfs(T.root);
-    
-    return answer;
+  return answer;
 }
 
 int main() {
-    string A, B;
-    std::getline(cin, A);
-    std::getline(cin, B);
-    cout << shortestNonShared(A, B) << "\n";
-}
+  string A, B;
+  std::getline(cin, A);
+  std::getline(cin, B);
 
+  // A = "AAAAA";
+  // B = "AAAAC";
+
+  cout << ShortestNonSharedSubstring(A, B) << "\n";
+
+  return EXIT_SUCCESS;
+}
