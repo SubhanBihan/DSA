@@ -1,0 +1,105 @@
+https://chatgpt.com/c/69698f81-f4a4-8320-b972-24aa63a09aaa
+
+DFS:
+
+struct Edge {
+    int to;
+    int w;
+};
+
+vector<vector<Edge>> tree;
+
+struct Frame {
+    int node;
+    size_t next_child;
+};
+
+vector<int> path;        // nodes on root → current
+vector<int> weights;    // edge weights along the path (parallel to path)
+int dist = 0;           // total weight of current path
+vector<Frame> stack;
+
+int root = 0;
+
+stack.push_back({root, 0});
+path.push_back(root);
+
+while (!stack.empty()) {
+    auto& top = stack.back();
+    int u = top.node;
+
+    // Here you have:
+    // path  = root → ... → u
+    // dist  = sum of weights along that path
+
+    process(u, path, dist);
+
+    if (top.next_child < tree[u].size()) {
+        auto [v, w] = tree[u][top.next_child++];
+
+        // go down
+        stack.push_back({v, 0});
+        path.push_back(v);
+        weights.push_back(w);
+        dist += w;
+    } else {
+        // backtrack
+        stack.pop_back();
+        path.pop_back();
+
+        if (!weights.empty()) {
+            dist -= weights.back();
+            weights.pop_back();
+        }
+    }
+}
+
+BFS:
+void bfs(const Graph& G, Node src) {
+    size_t n = G.size();
+
+    vector<bool> visited(n, false);
+    vector<Node> parent(n, -1);
+    vector<Dist> parent_w(n, 0);
+    vector<Dist> dist(n, 0);
+
+    queue<Node> q;
+
+    visited[src] = true;
+    q.push(src);
+
+    while (!q.empty()) {
+        Node u = q.front();
+        q.pop();
+
+        // u is now the "current node"
+        process(u, dist[u]);
+		// Also, the total weight of current path
+		Dist total = dist[v];
+
+        for (const auto& [v, w] : G[u]) {
+            if (!visited[v]) {
+                visited[v] = true;
+                parent[v] = u;
+                parent_w[v] = w;
+                dist[v] = dist[u] + w;
+                q.push(v);
+            }
+        }
+    }
+}
+
+// HOWEVER, the path from src to dest (if needed) has to be reconstructed, as BFS is frontier-oriented
+// (while DFS is path oriented)
+
+vector<Node> get_path(Node v,
+                      const vector<Node>& parent) {
+    vector<Node> path;
+    while (v != -1) {
+        path.push_back(v);
+        v = parent[v];
+    }
+    reverse(path.begin(), path.end());
+    return path;
+}
+
