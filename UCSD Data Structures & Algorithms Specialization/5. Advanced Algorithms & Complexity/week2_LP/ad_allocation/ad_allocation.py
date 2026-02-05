@@ -1,24 +1,29 @@
-# python3
-from sys import stdin
-  
-def allocate_ads(n, m, A, b, c):  
-  # Write your code here
-  return [0, [0] * m]
 
-n, m = list(map(int, stdin.readline().split()))
+import sys
+import numpy as np
+from scipy.optimize import linprog
+
+# Read input
+lines = sys.stdin.readlines()
+p, q = map(int, lines[0].split())
+
 A = []
-for i in range(n):
-  A += [list(map(int, stdin.readline().split()))]
-b = list(map(int, stdin.readline().split()))
-c = list(map(int, stdin.readline().split()))
+for i in range(1, p + 1):
+    row = list(map(float, lines[i].split()))
+    A.append(row)
+A = np.array(A)
 
-anst, ansx = allocate_ads(n, m, A, b, c)
+b = np.array(list(map(float, lines[p + 1].split())))
+c = np.array(list(map(float, lines[p + 2].split())))
 
-if anst == -1:
-  print("No solution")
-if anst == 0:  
-  print("Bounded solution")
-  print(' '.join(list(map(lambda x : '%.18f' % x, ansx))))
-if anst == 1:
-  print("Infinity")
-    
+# Solve: maximize c'x subject to Ax <= b, x >= 0
+# linprog minimizes, so we use -c
+result = linprog(-c, A_ub=A, b_ub=b, bounds=(0, None), method='highs')
+
+if result.status == 0:  # Optimal
+    print("Bounded solution")
+    print(' '.join(f"{x:.15f}" for x in result.x))
+elif result.status == 3:  # Unbounded
+    print("Infinity")
+else:  # Infeasible or other error
+    print("No solution")
