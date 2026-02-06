@@ -1,0 +1,3 @@
+For each var combination:
+if (sum of coeffs > b):
+    Make this particular combination impossible (negate each var for CNF)
