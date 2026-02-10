@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -7,14 +8,14 @@
 using namespace std;
 
 struct coeff {
-    unsigned ind;
-    int spend;
+    uint16_t ind;
+    int16_t spend;
 };
 
 using clause = vector<int>;
 
 int main() {
-    unsigned n, m;
+    uint16_t n, m;
     if (!(cin >> n >> m)) return 0;     // Here n = #inequalities (rows of A), m = #variables
 
     vector<vector<coeff>> A(n);
@@ -24,8 +25,8 @@ int main() {
     for (auto& Row: A) {
         Row.reserve(MAX_VAR_PER_INEQ);
 
-        for (unsigned ind = 1; ind <= m; ind++) {
-            int spend;
+        for (uint16_t ind = 1; ind <= m; ind++) {
+            int16_t spend;
             cin >> spend;
             if (spend != 0)
                 Row.push_back({ind, spend});
@@ -41,7 +42,7 @@ int main() {
     vector<clause> clauses;
     
     // Compute clauses
-    for (unsigned r = 0; r < n; r++) {
+    for (uint16_t r = 0; r < n; r++) {
         auto& Row = A[r];
 
         if (Row.empty() && b[r] < 0) {     // Impossible to satisfy, immediately print an impossible SAT and exit
@@ -52,12 +53,12 @@ int main() {
             return 0;
         }
 
-        for (unsigned p = 0; p < (1 << Row.size()); p++) {     // All possible combinations
+        for (uint16_t p = 0; p < (1 << Row.size()); p++) {     // All possible combinations
             clause c;
             c.reserve(Row.size());
             int total_spend = 0;
 
-            for (unsigned i = 0; i < Row.size(); i++) {
+            for (uint16_t i = 0; i < Row.size(); i++) {
                 if ((p >> i) & 1) {     // This index is present in this combination
                     c.push_back(-Row[i].ind);
                     total_spend += Row[i].spend;

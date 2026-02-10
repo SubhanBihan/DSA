@@ -60,12 +60,14 @@ void bfs(const Graph& G, Node src) {
 
     vector<bool> visited(n, false);
     vector<Node> parent(n, -1);
-    vector<Dist> parent_w(n, 0);
-    vector<Dist> dist(n, 0);
+    // vector<Dist> parent_w(n, 0);	// Doesn't seem necessary...
+    vector<Dist> dist(n, 0);		// If we want to calculate total weight along path
+	vector<Dist> min_edge(n);		
 
     queue<Node> q;
 
     visited[src] = true;
+	min_edge[src] = std::numeric_limits<Dist>::max();
     q.push(src);
 
     while (!q.empty()) {
@@ -81,8 +83,9 @@ void bfs(const Graph& G, Node src) {
             if (!visited[v]) {
                 visited[v] = true;
                 parent[v] = u;
-                parent_w[v] = w;
+                // parent_w[v] = w;
                 dist[v] = dist[u] + w;
+				min_edge[v] = std::min(min_edge[u], w);
                 q.push(v);
             }
         }
